@@ -20,7 +20,7 @@ export function useTicketing() {
     if (!user?.wallet?.address || !readContract) return
 
     try {
-      const adminStatus = await readContract.isAdmin(user.wallet.address)
+      const adminStatus = await (readContract as any).isAdmin(user.wallet.address)
       setIsAdmin(adminStatus)
     } catch (error) {
       console.error('Error checking admin status:', error)
@@ -33,7 +33,7 @@ export function useTicketing() {
 
     try {
       setLoading(true)
-      const activeMatches = await readContract.getActiveMatches()
+      const activeMatches = await (readContract as any).getActiveMatches()
       setMatches(activeMatches)
     } catch (error) {
       console.error('Error fetching matches:', error)
@@ -48,7 +48,7 @@ export function useTicketing() {
     if (!user?.wallet?.address || !readContract) return
 
     try {
-      const tickets = await readContract.getUserTickets(user.wallet.address)
+      const tickets = await (readContract as any).getUserTickets(user.wallet.address)
       setUserTickets(tickets)
     } catch (error) {
       console.error('Error fetching user tickets:', error)
@@ -61,7 +61,7 @@ export function useTicketing() {
     if (!readContract) return []
 
     try {
-      const ticketTypes = await readContract.getMatchTicketTypes(matchId)
+      const ticketTypes = await (readContract as any).getMatchTicketTypes(matchId)
       return ticketTypes
     } catch (error) {
       console.error('Error fetching ticket types:', error)
@@ -84,7 +84,7 @@ export function useTicketing() {
       const signer = await getSigner()
       const contractWithSigner = writeContract.connect(signer)
       
-      const tx = await contractWithSigner.createMatch(
+      const tx = await (contractWithSigner as any).createMatch(
         homeTeam,
         awayTeam,
         Math.floor(matchTime.getTime() / 1000),
@@ -118,7 +118,7 @@ export function useTicketing() {
       const signer = await getSigner()
       const contractWithSigner = writeContract.connect(signer)
       
-      const tx = await contractWithSigner.createTicketType(
+      const tx = await (contractWithSigner as any).createTicketType(
         matchId,
         category,
         parseMON(price),
@@ -146,7 +146,7 @@ export function useTicketing() {
       const signer = await getSigner()
       const contractWithSigner = writeContract.connect(signer)
       
-      const tx = await contractWithSigner.purchaseTicket(typeId, {
+      const tx = await (contractWithSigner as any).purchaseTicket(typeId, {
         value: price
       })
       
@@ -173,7 +173,7 @@ export function useTicketing() {
       const signer = await getSigner()
       const contractWithSigner = writeContract.connect(signer)
       
-      const tx = await contractWithSigner.refundTicket(ticketId)
+      const tx = await (contractWithSigner as any).refundTicket(ticketId)
       
       await tx.wait()
       toast.success('退票成功！')
@@ -198,7 +198,7 @@ export function useTicketing() {
       const signer = await getSigner()
       const contractWithSigner = writeContract.connect(signer)
       
-      const tx = await contractWithSigner.setMatchStatus(matchId, isActive)
+      const tx = await (contractWithSigner as any).setMatchStatus(matchId, isActive)
       
       await tx.wait()
       toast.success(`赛事${isActive ? '激活' : '停用'}成功！`)
@@ -218,7 +218,7 @@ export function useTicketing() {
     if (!readContract) return BigInt(0)
 
     try {
-      const balance = await readContract.getContractBalance()
+      const balance = await (readContract as any).getContractBalance()
       return balance
     } catch (error) {
       console.error('Error getting contract balance:', error)
@@ -235,7 +235,7 @@ export function useTicketing() {
       const signer = await getSigner()
       const contractWithSigner = writeContract.connect(signer)
       
-      const tx = await contractWithSigner.withdrawMON(amount)
+      const tx = await (contractWithSigner as any).withdrawMON(amount)
       
       await tx.wait()
       toast.success('提取成功！')

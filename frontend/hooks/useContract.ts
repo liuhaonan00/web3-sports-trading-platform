@@ -1,5 +1,5 @@
 import { usePrivy } from '@privy-io/react-auth'
-import { Contract, JsonRpcProvider, BrowserProvider } from 'ethers'
+import { Contract, JsonRpcProvider, BrowserProvider, InterfaceAbi } from 'ethers'
 import { useMemo } from 'react'
 import { TICKETING_SYSTEM_ABI } from '@/config/abi'
 import { TICKETING_CONTRACT_ADDRESS, MONAD_TESTNET } from '@/config/constants'
@@ -10,7 +10,7 @@ export function useContract() {
   const { readContract, writeContract, provider } = useMemo(() => {
     // 创建只读provider
     const readProvider = new JsonRpcProvider(MONAD_TESTNET.rpcUrls.default.http[0])
-    const readContract = new Contract(TICKETING_CONTRACT_ADDRESS, TICKETING_SYSTEM_ABI, readProvider)
+    const readContract = new Contract(TICKETING_CONTRACT_ADDRESS, TICKETING_SYSTEM_ABI as InterfaceAbi, readProvider)
 
     // 如果有连接的钱包，创建可写合约
     let writeContract = null
@@ -20,7 +20,7 @@ export function useContract() {
       try {
         // 使用浏览器钱包
         provider = new BrowserProvider(window.ethereum)
-        writeContract = new Contract(TICKETING_CONTRACT_ADDRESS, TICKETING_SYSTEM_ABI, provider)
+        writeContract = new Contract(TICKETING_CONTRACT_ADDRESS, TICKETING_SYSTEM_ABI as InterfaceAbi, provider)
       } catch (error) {
         console.error('Failed to create write contract:', error)
       }

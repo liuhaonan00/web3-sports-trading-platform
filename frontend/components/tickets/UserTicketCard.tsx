@@ -29,11 +29,11 @@ export default function UserTicketCard({ ticket }: UserTicketCardProps) {
         setLoadingDetails(true)
         
         // 获取赛事信息
-        const matchData = await readContract.matches(ticket.matchId)
+        const matchData = await (readContract as any).matches(ticket.matchId)
         setMatch(matchData)
         
         // 获取门票类型信息
-        const ticketTypeData = await readContract.ticketTypes(ticket.typeId)
+        const ticketTypeData = await (readContract as any).ticketTypes(ticket.typeId)
         setTicketType(ticketTypeData)
       } catch (error) {
         console.error('Error fetching ticket details:', error)
