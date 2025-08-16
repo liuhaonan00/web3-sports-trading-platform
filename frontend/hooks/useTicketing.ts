@@ -45,18 +45,10 @@ export function useTicketing() {
 
   // 获取用户门票
   const fetchUserTickets = useCallback(async () => {
-    if (!user?.wallet?.address || !readContract) {
-      console.log('fetchUserTickets: 用户地址或合约不可用', {
-        userAddress: user?.wallet?.address,
-        readContract: !!readContract
-      })
-      return
-    }
+    if (!user?.wallet?.address || !readContract) return
 
     try {
-      console.log('fetchUserTickets: 开始获取门票', user.wallet.address)
       const tickets = await readContract.getUserTickets(user.wallet.address)
-      console.log('fetchUserTickets: 获取到门票', tickets.length, tickets)
       setUserTickets(tickets)
     } catch (error) {
       console.error('Error fetching user tickets:', error)

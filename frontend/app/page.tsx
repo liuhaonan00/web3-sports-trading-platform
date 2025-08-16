@@ -10,7 +10,6 @@ import MatchCard from '@/components/matches/MatchCard'
 import UserTicketCard from '@/components/tickets/UserTicketCard'
 import CreateMatchModal from '@/components/admin/CreateMatchModal'
 import CreateTicketTypeModal from '@/components/admin/CreateTicketTypeModal'
-import DebugInfo from '@/components/debug/DebugInfo'
 import { useTicketing } from '@/hooks/useTicketing'
 
 export default function HomePage() {
@@ -66,9 +65,6 @@ export default function HomePage() {
   // 如果用户已登录，显示主界面
   return (
     <div className="space-y-6">
-      {/* 调试信息 */}
-      {process.env.NODE_ENV === 'development' && <DebugInfo />}
-      
       {/* 欢迎信息 */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between">
