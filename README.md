@@ -12,35 +12,59 @@
 
 ## 快速开始
 
-### 编译合约
+### 🚀 原生MON代币版本（推荐）
+
 ```bash
 cd solidity
-forge build
+
+# 一键部署原生代币版本
+./quick_deploy_native.sh
+
+# 交互测试
+./interact_native.sh <合约地址>
 ```
 
-### 运行测试
+### 🪙 ERC-20代币版本（测试用）
+
+```bash
+cd solidity
+
+# 一键部署ERC-20版本（包含MockMON代币）
+./quick_deploy.sh
+
+# 交互测试
+./interact_ticketing.sh <MON_TOKEN_ADDRESS> <TICKETING_SYSTEM_ADDRESS>
+```
+
+### 📋 分步部署（高级用户）
+
+```bash
+# 原生代币版本
+./deploy_native.sh
+
+# ERC-20版本
+./deploy_ticketing.sh
+```
+
+### 🧪 运行测试
+
 ```bash
 forge test
 ```
 
-### 部署合约
-```bash
-# 设置环境变量
-export PRIVATE_KEY="your_private_key"
-export MON_TOKEN_ADDRESS="mon_token_address"
+### 📚 查看详细指南
 
-# 部署到Monad测试网
-forge script script/DeployTicketingSystem.s.sol --rpc-url https://testnet-rpc.monad.xyz --broadcast
-```
-
-### 运行演示
 ```bash
-forge script script/Demo.s.sol --fork-url https://testnet-rpc.monad.xyz
+# 原生代币版本指南
+cat NATIVE_VERSION_GUIDE.md
+
+# ERC-20版本指南  
+cat SIMPLE_DEPLOY.md
 ```
 
 ## 详细文档
 
-查看 [TICKETING_SYSTEM_GUIDE.md](./sports-trading-platform/TICKETING_SYSTEM_GUIDE.md) 获取完整的使用指南。
+查看 [TICKETING_SYSTEM_GUIDE.md](./solidity/TICKETING_SYSTEM_GUIDE.md) 获取完整的使用指南。
 
 ## 合约地址
 
@@ -49,7 +73,7 @@ forge script script/Demo.s.sol --fork-url https://testnet-rpc.monad.xyz
 ## 项目结构
 
 ```
-sports-trading-platform/
+solidity/
 ├── src/
 │   └── TicketingSystem.sol      # 主合约
 ├── test/

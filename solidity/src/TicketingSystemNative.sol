@@ -1,19 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
- * @title TicketingSystem
- * @dev 足球赛事门票系统智能合约
- * 支持管理员管理赛事和门票，用户购买和退票功能
+ * @title TicketingSystemNative
+ * @dev 足球赛事门票系统智能合约 - 支持原生MON代币
+ * 支持管理员管理赛事和门票，用户使用原生MON代币购买和退票功能
  */
-contract TicketingSystem is Ownable, ReentrancyGuard {
-    
-    // MON代币合约地址
-    IERC20 public monToken;
+contract TicketingSystemNative is Ownable, ReentrancyGuard {
     
     // 用户角色枚举
     enum UserRole { USER, ADMIN }
@@ -37,7 +33,7 @@ contract TicketingSystem is Ownable, ReentrancyGuard {
         uint256 typeId;
         uint256 matchId;
         string category; // VIP, 普通席, 看台等
-        uint256 price; // 以MON代币为单位
+        uint256 price; // 以原生MON代币为单位 (wei)
         uint256 totalSupply;
         uint256 soldCount;
         bool isActive;
@@ -97,12 +93,8 @@ contract TicketingSystem is Ownable, ReentrancyGuard {
     
     /**
      * @dev 构造函数
-     * @param _monTokenAddress MON代币合约地址
      */
-    constructor(address _monTokenAddress) Ownable(msg.sender) {
-        require(_monTokenAddress != address(0), "Invalid MON token address");
-        monToken = IERC20(_monTokenAddress);
-        
+    constructor() Ownable(msg.sender) {
         // 将部署者设置为第一个管理员
         admins[msg.sender] = true;
         userRoles[msg.sender] = UserRole.ADMIN;
@@ -173,7 +165,7 @@ contract TicketingSystem is Ownable, ReentrancyGuard {
      * @dev 为指定赛事创建门票类型
      * @param _matchId 赛事ID
      * @param _category 门票类别
-     * @param _price 门票价格（MON代币）
+     * @param _price 门票价格（原生MON代币，以wei为单位）
      * @param _totalSupply 总供应量
      */
     function createTicketType(
@@ -202,10 +194,10 @@ contract TicketingSystem is Ownable, ReentrancyGuard {
     }
     
     /**
-     * @dev 用户购买门票
+     * @dev 用户购买门票（使用原生MON代币）
      * @param _typeId 门票类型ID
      */
-    function purchaseTicket(uint256 _typeId) external nonReentrant validTicketType(_typeId) {
+    function purchaseTicket(uint256 _typeId) external payable nonReentrant validTicketType(_typeId) {
         TicketType storage ticketType = ticketTypes[_typeId];
         require(ticketType.soldCount < ticketType.totalSupply, "Tickets sold out");
         
@@ -213,11 +205,7 @@ contract TicketingSystem is Ownable, ReentrancyGuard {
         require(matchInfo.matchTime > block.timestamp, "Match has already started or ended");
         
         uint256 price = ticketType.price;
-        require(monToken.balanceOf(msg.sender) >= price, "Insufficient MON token balance");
-        require(monToken.allowance(msg.sender, address(this)) >= price, "Insufficient allowance");
-        
-        // 转移MON代币到合约
-        require(monToken.transferFrom(msg.sender, address(this), price), "Token transfer failed");
+        require(msg.value >= price, "Insufficient MON sent");
         
         // 创建门票
         uint256 ticketId = nextTicketId++;
@@ -236,6 +224,11 @@ contract TicketingSystem is Ownable, ReentrancyGuard {
         
         // 添加到用户门票列表
         userTickets[msg.sender].push(ticketId);
+        
+        // 退还多余的MON代币
+        if (msg.value > price) {
+            payable(msg.sender).transfer(msg.value - price);
+        }
         
         emit TicketPurchased(ticketId, _typeId, msg.sender, price);
     }
@@ -257,14 +250,17 @@ contract TicketingSystem is Ownable, ReentrancyGuard {
         // 计算退款金额（可以设置手续费）
         uint256 refundAmount = ticket.price;
         
+        // 检查合约余额
+        require(address(this).balance >= refundAmount, "Insufficient contract balance for refund");
+        
         // 更新门票状态
         ticket.status = TicketStatus.REFUNDED;
         
         // 更新门票类型销售数量
         ticketTypes[ticket.typeId].soldCount--;
         
-        // 退款MON代币
-        require(monToken.transfer(msg.sender, refundAmount), "Refund transfer failed");
+        // 退款原生MON代币
+        payable(msg.sender).transfer(refundAmount);
         
         emit TicketRefunded(_ticketId, msg.sender, refundAmount);
     }
@@ -353,12 +349,12 @@ contract TicketingSystem is Ownable, ReentrancyGuard {
     }
     
     /**
-     * @dev 管理员提取合约中的MON代币
+     * @dev 管理员提取合约中的原生MON代币
      * @param _amount 提取数量
      */
     function withdrawMON(uint256 _amount) external onlyOwner {
-        require(_amount <= monToken.balanceOf(address(this)), "Insufficient contract balance");
-        require(monToken.transfer(owner(), _amount), "Transfer failed");
+        require(_amount <= address(this).balance, "Insufficient contract balance");
+        payable(owner()).transfer(_amount);
     }
     
     /**
@@ -370,9 +366,30 @@ contract TicketingSystem is Ownable, ReentrancyGuard {
     }
     
     /**
-     * @dev 获取合约MON代币余额
+     * @dev 获取合约原生MON代币余额
      */
     function getContractBalance() external view returns (uint256) {
-        return monToken.balanceOf(address(this));
+        return address(this).balance;
+    }
+    
+    /**
+     * @dev 紧急提取所有原生MON代币（仅合约拥有者）
+     */
+    function emergencyWithdraw() external onlyOwner {
+        payable(owner()).transfer(address(this).balance);
+    }
+    
+    /**
+     * @dev 接收原生MON代币的fallback函数
+     */
+    receive() external payable {
+        // 允许合约接收原生代币
+    }
+    
+    /**
+     * @dev fallback函数
+     */
+    fallback() external payable {
+        // 允许合约接收原生代币
     }
 }
